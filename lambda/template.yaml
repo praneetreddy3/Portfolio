@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Portfolio chatbot backend — Lambda Function URL + DynamoDB rate limit/cache tables
+
+Parameters:
+  CorsOrigin:
+    Type: String
+    Description: Exact allowed origin for CORS, e.g. https://yourportfolio.com
+  GroqApiKey:
+    Type: String
+    NoEcho: true
+  OpenRouterApiKey:
+    Type: String
+    NoEcho: true
+  DailyMessageLimit:
+    Type: String
+    Default: "20"
+  GlobalDailyLimit:
+    Type: String
+    Default: "500"
+    Description: Site-wide daily message ceiling across ALL visitors (abuse/cost circuit breaker)
+  PromptVersion:
+    Type: String
+    Default: "2"
+    Description: Bump this whenever systemPrompt.mjs changes, to invalidate cached answers
+  MaxOutputTokens:
+    Type: String
+    Default: "400"
+    Description: Hard ceiling on generated tokens — the main control on worst-case answer latency
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures: [arm64]
+    # Lambda allocates CPU in proportion to memory, so 512MB gets roughly
+    # double the CPU of 256MB. This request is I/O-bound (it mostly waits on
+    # the LLM), so it does NOT speed up inference — but it materially cuts
+    # COLD START, where the AWS SDK and handler modules are parsed and
+    # initialised. Billing is GB-seconds, so a duration that drops by about
+    # as much as memory rose is close to cost-neutral.
+    MemorySize: 512
+    Timeout: 30
+
+Resources:
+  RateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sourceIp
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sourceIp
+          KeyType: HASH
+        - AttributeName: date
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  AnswerCache:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: normalizedQuestion
+          AttributeType: S
+      KeySchema:
+        - AttributeName: normalizedQuestion
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  ChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: index.handler
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: [!Ref CorsOrigin]
+          AllowMethods: [POST]
+          AllowHeaders: [Content-Type]
+          MaxAge: 300
+      Environment:
+        Variables:
+          CORS_ORIGIN: !Ref CorsOrigin
+          GROQ_API_KEY: !Ref GroqApiKey
+          OPENROUTER_API_KEY: !Ref OpenRouterApiKey
+          GROQ_MODEL: openai/gpt-oss-120b
+          OPENROUTER_MODEL: meta-llama/llama-3.1-8b-instruct:free
+          DAILY_MESSAGE_LIMIT: !Ref DailyMessageLimit
+          GLOBAL_DAILY_LIMIT: !Ref GlobalDailyLimit
+          PROMPT_VERSION: !Ref PromptVersion
+          MAX_OUTPUT_TOKENS: !Ref MaxOutputTokens
+          RATE_TABLE_NAME: !Ref RateTable
+          CACHE_TABLE_NAME: !Ref AnswerCache
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RateTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AnswerCache
+
+Outputs:
+  FunctionUrl:
+    Description: Public Lambda Function URL — set this as VITE_LAMBDA_URL in the frontend
+    Value: !GetAtt ChatbotFunctionUrl.FunctionUrl

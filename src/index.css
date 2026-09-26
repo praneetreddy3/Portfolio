@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-xs: 420px;
+  --font-sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --font-display: "Orbitron", "Space Grotesk", sans-serif;
+
+  --color-bg: #060a14;
+  --color-surface: #0b1120;
+  --color-surface-2: #101828;
+  --color-border: #1b2a41;
+  --color-text: #e6edf7;
+  --color-text-dim: #7f92ad;
+  --color-accent: #00e5ff;
+  --color-accent-2: #a855f7;
+  --color-accent-3: #ff8a3d;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #000;
+}
+
+/* Consistent, on-brand focus indicator for keyboard navigation —
+   only shows on keyboard focus (:focus-visible), not on mouse clicks. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glow-text {
+  color: var(--color-accent);
+  text-shadow:
+    0 0 8px rgba(0, 229, 255, 0.6),
+    0 0 24px rgba(0, 229, 255, 0.35);
+}
+
+.glow-text-alt {
+  color: var(--color-accent-2);
+  text-shadow:
+    0 0 8px rgba(168, 85, 247, 0.6),
+    0 0 24px rgba(168, 85, 247, 0.35);
+}
+
+.glow-border {
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.5),
+    0 0 16px rgba(0, 229, 255, 0.25);
+}
+
+.section-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Ambient, always-running motion so the page feels alive even before scrolling */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(30px, -20px) scale(1.05); }
+  66%  { transform: translate(-20px, 20px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.animate-drift {
+  animation: drift 14s ease-in-out infinite;
+}
+.animate-drift-slow {
+  animation: drift 22s ease-in-out infinite reverse;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes scan {
+  0%   { transform: translateY(-10vh); }
+  100% { transform: translateY(110vh); }
+}
+.animate-scan {
+  animation: scan 6s linear infinite;
+}
+
+/* Subtle glitch flicker on hover — Tron/cyberpunk accent for the hero name */
+@keyframes glitch {
+  0%, 100% { text-shadow: 0 0 8px rgba(0, 229, 255, 0.6), 0 0 24px rgba(0, 229, 255, 0.35); transform: translate(0); }
+  20% { text-shadow: -2px 0 rgba(168, 85, 247, 0.8), 2px 0 rgba(0, 229, 255, 0.8); transform: translate(-1px, 0); }
+  40% { text-shadow: 2px 0 rgba(168, 85, 247, 0.8), -2px 0 rgba(0, 229, 255, 0.8); transform: translate(1px, 0); }
+  60% { text-shadow: 0 0 8px rgba(0, 229, 255, 0.6), 0 0 24px rgba(0, 229, 255, 0.35); transform: translate(0); }
+}
+.hover-glitch:hover {
+  animation: glitch 0.35s steps(2, end) 2;
+}
+
+/* Chat panel sizing — written as plain CSS rather than Tailwind arbitrary
+   values ([560px], [380px]) because those bracket utilities were compiling
+   inconsistently in this project (panel rendered far too small in one
+   build, then unbounded full-viewport height in another). Plain CSS with a
+   real media query sidesteps that entirely. */
+.chatbot-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 84px; /* toggle button's bottom-4 + its own height, minus a tighter gap */
+  z-index: 65;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  max-height: min(600px, calc(100vh - 100px));
+  border-radius: 0.75rem 0.75rem 0 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+@media (min-width: 640px) {
+  .chatbot-panel {
+    left: auto;
+    right: 1.5rem;
+    width: 380px;
+    border-radius: 0.75rem;
+  }
+}
+
+/* Thin, unobtrusive scrollbar for the chat message list — the browser's
+   default native scrollbar was rendering wide enough to crowd out the
+   message text inside the fixed-width chat panel. */
+.chatbot-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.chatbot-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.chatbot-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chatbot-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+
+/* Chatbot typing indicator — three bouncing dots */
+@keyframes chatbot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+.chatbot-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  display: inline-block;
+  animation: chatbot-bounce 1s infinite ease-in-out;
+}
