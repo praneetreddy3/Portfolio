@@ -165,12 +165,12 @@ export const projects = [
     dates: "Aug 2026",
     featured: true,
     description:
-      "Agentic RAG assistant answering questions from a senior-care operations knowledge base, where every answer is grounded in source documents and shown with citations. The pipeline grades retrieved passages before generation and runs a self-verification pass afterwards, flagging any answer not fully supported by its context. Built with a measured evaluation harness rather than eyeballed outputs, and served three ways — FastAPI, Streamlit and an MCP server — with Docker, CI and pytest coverage.",
+      "Agentic RAG assistant answering questions about PACE, Medicare and Medicaid, grounded entirely in real CMS and state source documents with inline citations on every answer. The pipeline grades retrieved passages before generation and runs a self-verification pass afterwards, flagging anything not fully supported by its context. Benchmarked on a 54-question evaluation set written against the source PDFs, with an independent LLM judge scoring faithfulness, and an n8n monitor that re-runs the evaluation and alerts when retrieval or grounding regresses. Served via FastAPI, Streamlit and an MCP server, with Docker, CI and pytest coverage.",
     tags: ["RAG", "LangGraph", "FAISS", "FastAPI", "Docker", "Python"],
-    metric: "1.00 grounded rate · 0.95 faithfulness",
+    metric: "0.98 grounded rate · 54-question eval",
     metrics: [
-      { value: "0.95", label: "Hit@4 retrieval" },
-      { value: "1.00", label: "grounded rate" },
+      { value: "0.93", label: "Hit@4 retrieval" },
+      { value: "0.98", label: "grounded rate" },
     ],
     flow: [
       "User Query",

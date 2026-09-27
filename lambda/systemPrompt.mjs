@@ -44,15 +44,17 @@ Programming & Tools: Python, SQL, R, LangChain, scikit-learn, XGBoost, TensorFlo
    for National Security Innovations Inc. (no public GitHub repo)
 
 2. Senior Care RAG Agent (Aug 2026)
-   Agentic RAG assistant over a senior-care operations knowledge base. Pipeline is
-   query -> retrieve -> grade -> generate -> verify, so retrieved passages are filtered
-   for relevance before generation and answers are self-checked for grounding afterwards;
-   every answer carries inline citations. Evaluated on a 20-question set: Hit@4 0.950,
-   MRR 0.783, answer keyword coverage 0.983, grounded rate 1.000, faithfulness 0.950.
-   Built with LangGraph orchestration, sentence-transformers (MiniLM) embeddings with a
-   TF-IDF fallback, FAISS/ChromaDB vector store, and pluggable LLM providers (Anthropic,
-   OpenAI, Groq). Served via FastAPI, Streamlit and an MCP server; Dockerised with CI
-   and pytest coverage.
+   Agentic RAG assistant answering questions about PACE, Medicare and Medicaid, grounded
+   entirely in real CMS and state source PDFs. Pipeline is query -> retrieve -> grade ->
+   generate -> verify, so retrieved passages are filtered for relevance before generation
+   and answers are self-checked for grounding afterwards; every answer carries inline
+   citations. Benchmarked on a 54-question evaluation set written against the source
+   documents: Hit@4 0.926, MRR 0.861, grounded rate 0.981, and faithfulness 0.778 scored
+   by an independent LLM judge rather than self-reported. An n8n monitor re-runs the
+   evaluation on a schedule and alerts when retrieval, grounding or faithfulness regresses
+   below threshold. Built with LangGraph orchestration, sentence-transformers embeddings
+   with a TF-IDF fallback, FAISS/ChromaDB vector store, and pluggable LLM providers.
+   Served via FastAPI, Streamlit and an MCP server; Dockerised with CI and pytest coverage.
    GitHub: https://github.com/praneetreddy3/senior-care-rag-agent
 
 3. Fair Bilevel Optimization for Collaborative Classification (Jan 2026 - Present)
