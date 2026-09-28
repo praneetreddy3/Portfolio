@@ -7,6 +7,14 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // the visitor sits watching a typing indicator the whole time. The system
 // prompt already asks for 3-5 sentences; this enforces it as a hard ceiling
 // instead of a polite request, and caps the worst case rather than the average.
+//
+// NOTE: the Groq model (openai/gpt-oss-120b) is a REASONING model — it spends
+// some of this same token budget on hidden "thinking" tokens before it ever
+// writes the visible reply. A budget that's comfortable for a plain instruct
+// model can still run out mid-sentence here, which is why this is higher
+// than you might expect for a ~100-word answer, and why index.mjs additionally
+// checks finish_reason and trims/discards a truncated answer rather than
+// trusting max_tokens alone to prevent it.
 const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS ?? 400);
 
 // Low but non-zero: answers are drawn from a fixed profile, so there is
@@ -16,6 +24,10 @@ const TEMPERATURE = Number(process.env.LLM_TEMPERATURE ?? 0.3);
 
 // Shared fetch wrapper. Never includes the API key value in a thrown error
 // message (Requirement 13.3) — only the HTTP status is surfaced.
+//
+// Returns { content, finishReason } rather than a bare string so the caller
+// can tell a complete answer (finish_reason "stop") apart from one cut off
+// by the token ceiling (finish_reason "length") — see the NOTE above.
 async function callProvider({ url, apiKey, model, conversation, timeoutMs }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -40,11 +52,12 @@ async function callProvider({ url, apiKey, model, conversation, timeoutMs }) {
     }
 
     const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
+    const choice = data?.choices?.[0];
+    const content = choice?.message?.content;
     if (typeof content !== "string" || content.length === 0) {
       throw new Error("Provider returned an empty response");
     }
-    return content;
+    return { content, finishReason: choice?.finish_reason ?? null };
   } finally {
     clearTimeout(timer);
   }

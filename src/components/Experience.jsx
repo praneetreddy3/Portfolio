@@ -50,7 +50,7 @@ export default function Experience() {
                     key={b}
                     className="flex gap-2 text-sm text-text-dim"
                   >
-                    <span className="text-accent shrink-0">⚡</span>
+                    <span className="text-accent font-mono shrink-0">&gt;</span>
                     <span>{b}</span>
                   </li>
                 ))}

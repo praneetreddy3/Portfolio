@@ -34,8 +34,10 @@ beforeEach(() => {
   dynamodbMocks.incrementRateLimit.mockReset().mockResolvedValue(undefined);
   dynamodbMocks.checkCache.mockReset().mockResolvedValue(null);
   dynamodbMocks.writeCache.mockReset().mockResolvedValue(undefined);
-  providerMocks.callGroq.mockReset().mockResolvedValue("Groq answer");
-  providerMocks.callOpenRouter.mockReset().mockResolvedValue("OpenRouter answer");
+  providerMocks.callGroq.mockReset().mockResolvedValue({ content: "Groq answer", finishReason: "stop" });
+  providerMocks.callOpenRouter
+    .mockReset()
+    .mockResolvedValue({ content: "OpenRouter answer", finishReason: "stop" });
 });
 
 describe("normalizeQuestion", () => {
@@ -133,7 +135,7 @@ describe("provider fallback", () => {
     expect(dynamodbMocks.writeCache).not.toHaveBeenCalled();
   });
 
-  it("caches a real AI-generated answer under a prompt-versioned key", async () => {
+  it("caches a real, complete AI-generated answer under the prompt-versioned key", async () => {
     await handler(mockEvent({ body: { message: "hello" } }));
     expect(dynamodbMocks.writeCache).toHaveBeenCalledWith("v2:hello", "Groq answer");
   });

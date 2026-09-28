@@ -37,8 +37,10 @@ beforeEach(() => {
   dynamodbMocks.incrementRateLimit.mockReset().mockResolvedValue(undefined);
   dynamodbMocks.checkCache.mockReset().mockResolvedValue(null);
   dynamodbMocks.writeCache.mockReset().mockResolvedValue(undefined);
-  providerMocks.callGroq.mockReset().mockResolvedValue("Groq answer");
-  providerMocks.callOpenRouter.mockReset().mockResolvedValue("OpenRouter answer");
+  providerMocks.callGroq.mockReset().mockResolvedValue({ content: "Groq answer", finishReason: "stop" });
+  providerMocks.callOpenRouter
+    .mockReset()
+    .mockResolvedValue({ content: "OpenRouter answer", finishReason: "stop" });
 });
 
 describe("cache key normalisation", () => {
@@ -116,10 +118,78 @@ describe("cache correctness", () => {
   });
 
   it("does not cache an answer large enough to threaten the DynamoDB item limit", async () => {
-    providerMocks.callGroq.mockResolvedValue("x".repeat(300_000));
+    providerMocks.callGroq.mockResolvedValue({ content: "x".repeat(300_000), finishReason: "stop" });
     const res = await handler(mockEvent({ body: { message: "hello" } }));
     expect(res.statusCode).toBe(200); // visitor still gets the answer
     expect(dynamodbMocks.writeCache).not.toHaveBeenCalled();
+  });
+});
+
+describe("truncated answers (reasoning model ran out of token budget)", () => {
+  // The Groq model is a reasoning model: its hidden "thinking" tokens share
+  // the same max_tokens budget as the visible reply, so a request can hit
+  // the ceiling mid-sentence even though the provider call itself succeeds
+  // (200 OK). This is exactly what happened in production: a visitor asked
+  // "Tell me about your background and education" and got back "...George
+  // Mason University (Aug 202" with no punctuation, no retry, no warning —
+  // and it very nearly got cached for the next 30 days.
+
+  it("trims a truncated answer back to its last complete sentence", async () => {
+    providerMocks.callGroq.mockResolvedValue({
+      content:
+        "Sai Praneet is an AI/ML Engineer. He earned an M.S. from George Mason University. He also worked at Mahindra (Aug 202",
+      finishReason: "length",
+    });
+    const res = await handler(mockEvent({ body: { message: "background" } }));
+    const parsed = JSON.parse(res.body);
+    expect(parsed.answer).toBe(
+      "Sai Praneet is an AI/ML Engineer. He earned an M.S. from George Mason University. He also worked at Mahindra (Aug 202"
+        .match(/^[\s\S]*[.!?](?=\s|$)/)[0]
+        .trim()
+    );
+    expect(parsed.answer.endsWith("George Mason University.")).toBe(true);
+    expect(parsed.answer).not.toMatch(/Aug 202$/);
+  });
+
+  it("falls back to a polite retry message when no complete sentence exists at all", async () => {
+    providerMocks.callGroq.mockResolvedValue({
+      content: "Sai Praneet Reddy Chinthala is an AI/ML & Data Engineer based in Fairfax, Virginia",
+      finishReason: "length",
+    });
+    const res = await handler(mockEvent({ body: { message: "background" } }));
+    const parsed = JSON.parse(res.body);
+    expect(parsed.answer).toMatch(/couldn't|wasn't able|ask again|praneetreddy66@gmail\.com/i);
+  });
+
+  it("never caches a truncated answer, trimmed or not", async () => {
+    providerMocks.callGroq.mockResolvedValue({
+      content: "This is a complete-looking first sentence. But then it just stops partway through (Aug 202",
+      finishReason: "length",
+    });
+    await handler(mockEvent({ body: { message: "background" } }));
+    expect(dynamodbMocks.writeCache).not.toHaveBeenCalled();
+  });
+
+  it("falls through to OpenRouter's answer untouched if only Groq was truncated", async () => {
+    providerMocks.callGroq.mockResolvedValue({ content: "cut off mid", finishReason: "length" });
+    providerMocks.callOpenRouter.mockResolvedValue({
+      content: "A complete OpenRouter answer.",
+      finishReason: "stop",
+    });
+    const res = await handler(mockEvent({ body: { message: "background" } }));
+    const parsed = JSON.parse(res.body);
+    // Groq "succeeded" (200, non-empty content) so this exercises finalizeAnswer's
+    // trimming path, not the try/catch fallback — Groq's own truncated text (or
+    // its fallback message) is what's returned, OpenRouter is never reached.
+    expect(providerMocks.callOpenRouter).not.toHaveBeenCalled();
+    expect(parsed.answer).not.toBe("A complete OpenRouter answer.");
+  });
+
+  it("does not touch a complete answer (finish_reason stop) even if it looks short", async () => {
+    providerMocks.callGroq.mockResolvedValue({ content: "Yes.", finishReason: "stop" });
+    const res = await handler(mockEvent({ body: { message: "is that right" } }));
+    const parsed = JSON.parse(res.body);
+    expect(parsed.answer).toBe("Yes.");
   });
 });
 

@@ -32,6 +32,44 @@ const PROMPT_VERSION = process.env.PROMPT_VERSION ?? "2";
 // would be driven into real money on the AI providers.
 const GLOBAL_BUCKET = "__GLOBAL__";
 
+// Matches everything up to and including the LAST sentence-ending
+// punctuation mark. Used to salvage a truncated answer (see finalizeAnswer).
+const LAST_SENTENCE_RE = /^[\s\S]*[.!?](?=\s|$)/;
+
+// A short, complete sentence is still a usable answer; anything shorter than
+// this after trimming isn't worth showing (it reads as a non-sequitur), so
+// we fall back to the polite retry message instead.
+const MIN_USABLE_TRIM_LENGTH = 20;
+
+const TRUNCATION_FALLBACK_MESSAGE =
+  "I wasn't able to finish putting that answer together. Could you ask again, " +
+  "or rephrase it a bit? You can also reach Sai Praneet directly at " +
+  "praneetreddy66@gmail.com.";
+
+// The Groq model is a reasoning model, so a request can legitimately run out
+// of its token budget mid-sentence (see the note in providers.mjs) — the
+// provider still returns 200 with whatever partial text it had, so this is
+// NOT caught by the try/catch around callGroq/callOpenRouter. Left alone,
+// that half-sentence gets shown to the visitor verbatim and then cached for
+// everyone else who asks something similar for the next 30 days.
+//
+// finalizeAnswer() is the safety net: a truncated (finishReason "length")
+// answer gets trimmed back to its last complete sentence, or replaced by a
+// short, honest fallback message if it never completed one — and either way
+// it's marked non-cacheable, so the next visitor gets a fresh attempt
+// instead of the same cut-off text.
+function finalizeAnswer({ content, finishReason }) {
+  if (finishReason !== "length") {
+    return { text: content, cacheable: true };
+  }
+  const match = content.match(LAST_SENTENCE_RE);
+  const trimmed = match ? match[0].trim() : "";
+  if (trimmed.length >= MIN_USABLE_TRIM_LENGTH) {
+    return { text: trimmed, cacheable: false };
+  }
+  return { text: TRUNCATION_FALLBACK_MESSAGE, cacheable: false };
+}
+
 export async function handler(event) {
   // 1. Method guard
   const method = event?.requestContext?.http?.method;
@@ -174,8 +212,10 @@ export async function handler(event) {
 
   // 8. Groq primary
   let answer = null;
+  let cacheable = true;
   try {
-    answer = await callGroq(conversation);
+    const result = await callGroq(conversation);
+    ({ text: answer, cacheable } = finalizeAnswer(result));
   } catch (err) {
     console.error("Groq failed:", err.message);
   }
@@ -183,21 +223,23 @@ export async function handler(event) {
   // 9. OpenRouter fallback
   if (answer === null) {
     try {
-      answer = await callOpenRouter(conversation);
+      const result = await callOpenRouter(conversation);
+      ({ text: answer, cacheable } = finalizeAnswer(result));
     } catch (err) {
       console.error("OpenRouter failed:", err.message);
     }
   }
 
   // 10. Graceful static fallback + cache write
-  // Only real AI-generated answers are cached — caching the static fallback
-  // would keep serving it for 30 days even after providers recover.
+  // Only real, COMPLETE AI-generated answers are cached — caching the
+  // static fallback, or a truncated answer, would keep serving it for 30
+  // days even after providers recover / the token budget is big enough.
   if (answer === null) {
     answer =
       "I'm having trouble connecting to my AI backend right now. " +
       "You can reach Sai Praneet directly at praneetreddy66@gmail.com " +
       "or on LinkedIn: https://www.linkedin.com/in/sai-praneet-reddy-chinthala/";
-  } else if (cacheKey && answer.length <= MAX_CACHEABLE_ANSWER) {
+  } else if (cacheable && cacheKey && answer.length <= MAX_CACHEABLE_ANSWER) {
     await writeCache(cacheKey, answer).catch((err) =>
       console.error("Cache write failed:", err.message)
     );

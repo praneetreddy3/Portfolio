@@ -21,12 +21,20 @@ Parameters:
     Description: Site-wide daily message ceiling across ALL visitors (abuse/cost circuit breaker)
   PromptVersion:
     Type: String
-    Default: "2"
+    Default: "10"
     Description: Bump this whenever systemPrompt.mjs changes, to invalidate cached answers
   MaxOutputTokens:
     Type: String
-    Default: "400"
-    Description: Hard ceiling on generated tokens — the main control on worst-case answer latency
+    Default: "900"
+    Description: >
+      Hard ceiling on generated tokens — the main control on worst-case answer
+      latency. The Groq model (openai/gpt-oss-120b) is a reasoning model whose
+      hidden "thinking" tokens share this same budget, so it needs headroom
+      well beyond what the visible ~100-word answer alone would need — 400
+      was too tight and caused answers to be cut off mid-sentence in
+      production. index.mjs also trims/discards a truncated answer as a
+      second line of defense, so this is a latency/safety-margin tradeoff,
+      not the only thing standing between a visitor and a cut-off reply.
 
 Globals:
   Function:

@@ -7,10 +7,13 @@ import Projects from "./components/Projects";
 import Contact from "./components/Contact";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ChatWidget from "./components/chatbot/ChatWidget";
+import CustomCursor from "./components/CustomCursor";
 
 function App() {
   return (
     <div className="min-h-screen bg-bg text-text">
+      <CustomCursor />
+
       {/* Keyboard and screen-reader users shouldn't have to tab through the
           whole nav on every page load to reach the content. Visually hidden
           until focused. */}

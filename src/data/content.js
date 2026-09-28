@@ -11,7 +11,7 @@ export const profile = {
   email: "praneetreddy66@gmail.com",
   github: "https://github.com/praneetreddy3",
   linkedin: "https://www.linkedin.com/in/sai-praneet-reddy-chinthala/",
-  status: "F-1 STEM OPT authorized — 3 years, no sponsorship needed",
+  status: "Open to full-time opportunities",
   about: `M.S. Data Analytics Engineering graduate from George Mason University, with experience across industry internships, academic research, and teaching. I specialize in taking messy data and turning it into intelligent systems — whether that's building RAG pipelines, deploying ML models, or scaling ETL infrastructure. Currently collaborating with faculty on fairness in machine learning, exploring how bias manifests in real-world datasets and building mitigation strategies for production ML systems.`,
   bio: `What pulls me in is the point where data stops being rows and starts being a decision someone can act on. During my GenAI internship at Mahindra, most of the work was cleaning years of messy machine-service spreadsheets so a chatbot could tell a plant worker what had actually last been done to a machine — the model was the easy part. I taught the same idea as a TA for Big Data Essentials, walking two classes of about 35 students through how data gets processed in Databricks and stored in the cloud, and I'm putting it to use now as a volunteer data engineer at Saayam For All.`,
   highlights: [
