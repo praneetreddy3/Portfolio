@@ -58,9 +58,9 @@ export const experience = [
     dates: "Aug 2026 – Present",
     location: "Remote · Volunteer",
     bullets: [
-      "Design, build, and maintain ETL pipelines for a 501(c)(3) nonprofit, extracting raw data, applying transformations, and loading it into structured storage systems.",
-      "Write SQL queries and Python scripts to retrieve, clean, and aggregate data for business intelligence reporting, and manage data assets in AWS S3.",
-      "Perform data quality checks, contribute to Power BI dashboards, and monitor daily pipeline runs alongside the engineering team.",
+      "Support the data-analytics workstream with ETL and data-quality tooling for BI reporting.",
+      "Built a Python synthetic-data generator and validator for 10 relationally consistent tables (schemas matched to production; foreign-key, geo-coordinate and fake-PII checks), enabling dashboard work without real user data.",
+      "Built an AWS Lambda analytics API (Python, pandas) serving rating-distribution and organization-growth trend charts for the organization dashboard, with 7-day to custom time windows, country filtering and input validation.",
     ],
   },
   {
@@ -69,9 +69,9 @@ export const experience = [
     dates: "Jan 2026 – May 2026",
     location: "Fairfax, VA · On-site",
     bullets: [
-      "Led hands-on lab sessions for AIT614: Big Data Essentials driven by AI, focusing on Spark and distributed data processing.",
-      "Graded over 100 student code submissions, providing targeted feedback on big data implementations.",
-      "Collaborated with faculty to improve course materials and lab exercises, aligning with industry standards.",
+      "Led 10 hands-on labs across two sections on Databricks, Spark/PySpark, MongoDB, Hadoop, AWS and LangChain RAG.",
+      "Graded 100+ Python and PySpark submissions from 35 students on ETL, model training and feature engineering.",
+      "Solved the professor-assigned problem sets ahead of the course calendar, producing the reference solutions used by other TAs, and guided students through questions and term-long big-data projects.",
     ],
   },
   {
@@ -80,9 +80,8 @@ export const experience = [
     dates: "Feb 2024 – May 2024",
     location: "Pune, India · Remote",
     bullets: [
-      "Modified and optimized a RAG-based chatbot system using Python and OpenAI embeddings.",
-      "Developed a manufacturing knowledge base through data cleaning and merging for enhanced support.",
-      "Implemented user authentication and a Streamlit UI for employee access across three plant locations.",
+      "Consolidated 20+ machine-breakdown root-cause Excel logs from three plants into one standardized dataset with pandas.",
+      "Adapted an internal Azure OpenAI RAG chatbot (embeddings + vector similarity search) to the cleaned corpus so engineers could query breakdown history in natural language.",
     ],
   },
   {

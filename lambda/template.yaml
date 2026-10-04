@@ -21,7 +21,7 @@ Parameters:
     Description: Site-wide daily message ceiling across ALL visitors (abuse/cost circuit breaker)
   PromptVersion:
     Type: String
-    Default: "10"
+    Default: "11"
     Description: Bump this whenever systemPrompt.mjs changes, to invalidate cached answers
   MaxOutputTokens:
     Type: String

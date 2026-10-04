@@ -77,13 +77,21 @@ Programming & Tools: Python, SQL, R, LangChain, scikit-learn, XGBoost, TensorFlo
 
 ## Experience
 - Data Engineer (Volunteer), Saayam For All, a 501(c)(3) non-profit (Aug 2026 - Present, remote,
-  unpaid, 25 hrs/week) - builds and maintains ETL pipelines, writes SQL/Python for data cleaning
-  and BI reporting, manages data assets in AWS S3, performs data quality checks, contributes to
-  Power BI dashboards, monitors daily pipeline runs
-- Graduate Teaching Assistant, George Mason University (Jan-May 2026) - led labs for AIT614
-  Big Data Essentials (Spark), graded 100+ submissions
-- Generative AI Engineer, Mahindra and Mahindra Limited (Feb-May 2024) - RAG chatbot with
-  OpenAI embeddings, manufacturing knowledge base, Streamlit UI across three plant locations
+  unpaid) - built a Python synthetic-data generator and validator for 10 relationally consistent
+  tables (schemas matched to production; foreign-key, geo-coordinate and fake-PII checks) so the
+  analytics team can build dashboards without real user data; built an AWS Lambda analytics API
+  (Python, pandas) serving rating-distribution and organization-growth trend charts for the
+  organization dashboard. Both are submitted pull requests awaiting team review.
+- Graduate Teaching Assistant, George Mason University (Jan-May 2026) - led 10 hands-on labs
+  across two sections for AIT614 Big Data Essentials (Databricks, Spark/PySpark, MongoDB, Hadoop,
+  AWS, LangChain RAG); graded 100+ Python and PySpark submissions from 35 students; solved the
+  assignments ahead of the course calendar, producing the reference solutions other TAs used.
+- Generative AI Engineer Intern, Mahindra and Mahindra Limited (Feb-May 2024) - consolidated 20+
+  machine-breakdown root-cause Excel logs from three plants into one dataset with pandas, then
+  adapted an existing internal Azure OpenAI RAG chatbot to that corpus so engineers could query
+  breakdown history in natural language. The chatbot itself, including its Streamlit UI and
+  login, was built by other engineers before he joined; his work was the data consolidation and
+  the adaptation.
 - UI Technologies Intern, Aspire InfoLabs (Jun-Jul 2023) - full-stack MERN mentoring platform,
   JWT auth, OTP verification
 
